@@ -41,6 +41,7 @@ end
 local function setup(hostname, request_processor, modem, cooldown)
 
     MODEM_SIDE = findModemWithPreferred(modem)
+    print('Will host from modem: '..MODEM_SIDE)
 
     -- Generate a start and stop function
     return
@@ -49,24 +50,26 @@ local function setup(hostname, request_processor, modem, cooldown)
     function ()
         rednet.open(MODEM_SIDE)
 
-        rednet.host(PROTOCOL, hostname)
+        rednet.host(string.upper(PROTOCOL), hostname)
+
+        print('Now hosting '..string.lower(PROTOCOL)..'://'..hostname..'')
+        IS_SERVER_RUNNING = true
 
         repeat
-            local senderId, message, protocol = rednet.receive(PROTOCOL, 5)
+            local request_method, request_body, response_status, response_body, response
+
+            local senderId, message, protocol = rednet.receive(string.upper(PROTOCOL), 5)
             if not senderId then goto continue end
 
-            local status
-            local response_body
-
             -- message="GET myresource"  ->  method="GET" body="myresource"
-            local method, body = message:match("^(%S+)%s+(.*)$")
-            if not method then -- if no whitespace is present
-                status, response_body = 201, "Request needs to start with a method, followed by a whitespace and the request body."
+            request_method, request_body = message:match("^(%S+)%s+(.*)$")
+            if not request_method then -- if no whitespace is present
+                response_status, response_body = 201, "Request needs to start with a method, followed by a whitespace and the request body."
             else -- process the request
-                status, response_body = request_processor(senderId, string.upper(method), body, protocol)
+                response_status, response_body = request_processor(senderId, string.upper(request_method), request_body, protocol)
             end
 
-            local response = { status = status, body = response_body }
+            response = { status = response_status, body = response_body }
             rednet.send(senderId, response, protocol)
 
             ::continue::
@@ -76,7 +79,7 @@ local function setup(hostname, request_processor, modem, cooldown)
 
     -- STOP
     function ()
-        rednet.unhost(PROTOCOL, hostname)
+        rednet.unhost(string.upper(PROTOCOL), hostname)
 
         rednet.close(MODEM_SIDE)
 
@@ -87,7 +90,7 @@ end
 
 -- PREDEFINED REQUEST PROCESSORS
 
-local requestProcessors -- table to hold them
+local requestProcessors = {} -- table to hold them
 
 function requestProcessors.static(directory)
     return function (senderId, method, body, protocol)

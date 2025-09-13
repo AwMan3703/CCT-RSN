@@ -37,7 +37,7 @@ end
 
 local function setup(modem)
     local modem_side = findModemWithPreferred(modem)
-    rednet.open(modem)
+    rednet.open(modem_side)
 end
 
 local function enrichResponse(response)
@@ -50,14 +50,14 @@ local function enrichResponse(response)
 end
 
 local function sendRequestAndAwaitResponse(hostname, method, body)
-    local serverId = rednet.lookup(PROTOCOL, hostname)
+    local serverId = rednet.lookup(string.upper(PROTOCOL), hostname)
     if not serverId then return enrichResponse({ status = 301, body = nil }), nil end
 
-    rednet.send(serverId, string.upper(method).." "..body, PROTOCOL)
+    rednet.send(serverId, string.upper(method).." "..body, string.upper(PROTOCOL))
 
     local responderId, response, responseProtocol
     repeat
-        responderId, response, responseProtocol = rednet.receive(PROTOCOL, 3)
+        responderId, response, responseProtocol = rednet.receive(string.upper(PROTOCOL), 3)
     until (responderId == serverId) or (not response)
 
     if not response then return enrichResponse({ status = 901, body = nil }), nil end
