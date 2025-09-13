@@ -63,7 +63,7 @@ local function sendRequestAndAwaitResponse(hostname, method, request)
         responderId, response, responseProtocol = rednet.receive(string.upper(PROTOCOL), 3)
     until (responderId == serverId) or (not response)
 
-    if not response then return enrichResponse({ status = 901, body = nil }), nil end
+    if not response then return enrichResponse({ status = 901, body = 'Server did not respond' }), nil end
 
     return enrichResponse(response), responderId
 end

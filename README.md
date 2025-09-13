@@ -22,7 +22,8 @@ Similar to HTTP, allows clients to make requests and servers to fulfill them.
 A request processor is a simple function to be executed on every incoming message to this server. It should take four parameters: `senderId` (the computer ID of the request sender), `method` (one of the methods above, describing what to do with the request), `request` (a table with any data sent from the client) and `protocol` (this will always be "rsn"). It should then return a `status code` (a number that describes the result of the request — e.g. if and how it succeeded, if errors occurred, etc... — see _./response-codes.md_) and a `response` (content that will be sent back as a response. This may be either a table or any primitive type: if the response isn't a table, its value will be put in the "body" field of the response sent to the client).
 
 Predefined request processors are available in the RSNRequestProcessors API, available with `local rsnRequestProcessors = require('RSN_request_processors')` (CALL these when setting up the server, don't pass the function themselves to `rsnServer.setup`):
-- `rsnRequestProcessors.static(<path>)` — serves static files from a local directory (IMPORTANT: this allows anyone to access and modify any resource! Consider creating a custom processor if your desired behavior is more complex.)
+- `rsnRequestProcessors.static(<directory>)` — serves static files from a local directory (IMPORTANT: this allows anyone to access and modify any resource! Consider using `rsnRequestProcessors.sandboxed` or creating a custom processor if your desired behavior is more complex.)
+- `rsnRequestProcessors.sandboxed(<directory>)` — serves static files from a local directory, sandboxing each client in its own folder. This way, for example, a file created by computer #1 cannot be accessed or modified by computer #2. 
 - `rsnRequestProcessors.echo()` — echoes the request's body back to the sender
 
 Example of a custom request processor:

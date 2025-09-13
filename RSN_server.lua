@@ -65,7 +65,7 @@ local function setup(hostname, request_processor, modem, cooldown)
             request_method = request.method
             request.method = nil
             if not request_method then -- if no whitespace is present
-                response_status, response = 201, "Request needs to have a <method> property."
+                response_status, response = 201, "Request needs to have a <method> property"
             else -- process the request
                 if not request.body then request.body = '' end
                 response_status, response = request_processor(senderId, string.upper(request_method), request, protocol)

@@ -29,7 +29,7 @@
 		*resource cannot be distributed.*
 	- error message in response body.
 - 404 - NOT FOUND
-		*resource was not found. In case of existing but unretrievable resource, see 302. In case of existing but unavailable resource see 403*
+		*resource was not found. In case of existing but unretrievable resource, see 302*
 	- error message in response body.
 #### Cache updates / validation
 *response codes for checking whether cache is still valid. Last cache date should be passed in the request.*
@@ -52,7 +52,7 @@
 
 ## Response code details
 *a DETAIL is a letter that can be integrated with the response code to better describe what happened. Append with a dash:* `[response code]-[detail]`
-#### Redirected
+
 - R - REDIRECTED
 	*the request was redirected to a new location before being processed*
 	- redirection details in response body, specifying the path followed to find the resource (e.g. in json), may also contain human-readable notes about the redirection.
