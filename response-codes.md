@@ -39,8 +39,8 @@
 	- cached resource no longer works.
 	- response body contains new resource, client should update local cache with it.
 #### Other
-- 901 - REFUSED TO PROCESS
-		*server refused to process the request.*
+- 901 - NO RESPONSE
+		*server did not respond.*
 	- information message in response body.
 - 999 - OTHER RESPONSE TYPE
 		*request was not handled in any of the defined ways.*
@@ -48,6 +48,8 @@
 #### Custom
 - 100X - CUSTOM
 		*custom / domain-specific response codes can range from 1001 to infinity*
+
+
 ## Response code details
 *a DETAIL is a letter that can be integrated with the response code to better describe what happened. Append with a dash:* `[response code]-[detail]`
 #### Redirected

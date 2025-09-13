@@ -22,7 +22,7 @@ Similar to HTTP, allows clients to make requests and servers to fulfill them.
 A request processor is a simple function to be executed on every incoming message to this server. It should take four parameters: `senderId` (the computer ID of the request sender), `method` (one of the methods above, describing what to do with the request), `body` (the content of the request) and `protocol` (this will always be "rsn"). It should then return a `status code` (a number that describes the result of the request — e.g. if and how it succeeded, if errors occurred, etc... — see _./response-codes.md_) and a `response` (content that will be sent back as a response).
 
 Predefined request processors are available in the RSN API (CALL these when setting up the server, don't pass the function themselves to `rsnServer.setup`):
-- `rsnServer.requestProcessors.static(<path>)` — serves static files from a local directory
+- `rsnServer.requestProcessors.static(<path>)` — serves static files from a local directory (IMPORTANT: this allow anyone to access and modify any resource! Consider creating a custom processor if your desired behavior is more complex.)
 - `rsnServer.requestProcessors.echo()` — echoes the request's body back to the sender
 
 Example of a custom request processor:
@@ -50,8 +50,11 @@ end
 ## How to use RSN from the client
 
 1. In your code, get the client library with `local rsn = require("RSN_client")`
-2. Send requests with `local response = rsn.get(<server hostname>, <resource name>)` and upload/modify them with `local response = rsn.put(<server hostname>, <resource name>, <content>)`
+2. Setup the client with `rsn.setup(modem)`
+    - `modem` (optional) The peripheral name of the modem to transmit through. If this is not provided, a random open modem will be used. If no modem is open but this is set to `"auto"`, a random one will be opened.
+3. Send requests with `local response, serverId = rsn.get(<server hostname>, <resource name>)` and upload/modify them with `local response = rsn.put(<server hostname>, <resource name>, <content>)`
     - `server hostname` The server to send the request to
     - `resource name` The resource's name (id, path, title, or whatever else)
     - `content` In PUT requests, the content to upload
-3. Extract resources and status codes with `response.status` and `response.body`
+If your server adds custom methods, you can specify your method by using `rsn.request(<server hostname>, <method>, <body>)`
+4. Extract resources and status codes with `response.status` and `response.body`

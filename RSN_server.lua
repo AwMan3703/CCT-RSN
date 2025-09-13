@@ -1,23 +1,53 @@
 -- CONFIG
 local PROTOCOL = 'RSN'
-local IS_SERVER_RUNNING = false
 local METHODS = {
     GET = 'GET',
     PUT = 'PUT'
 }
+-- RUNTIME
+local IS_SERVER_RUNNING = false
+local MODEM_SIDE
 
 
 -- FUNCTIONS
 
+local function findModemWithPreferred(preferred_modem)
+    -- if a preferred modem is present and valid, return it
+    if preferred_modem and preferred_modem ~= "auto" then
+        local wrapped = peripheral.wrap(preferred_modem)
+        if wrapped then return wrapped end
+    end
+
+    -- otherwise, look for an open modem
+    local peripheral_names = peripheral.getNames()
+    local all_modems = {}
+    for _, peripheral_name in ipairs(peripheral_names) do
+        -- check that we're working with a modem
+        if peripheral.getType(peripheral_name) ~= "modem" then goto continue end
+
+        -- if the modem is open, return it right away
+        if rednet.isOpen(peripheral_name) then return peripheral_name
+        -- otherwise, add it to all_modems for later fallback
+        else table.insert(all_modems, peripheral_name) end
+
+        ::continue::
+    end
+
+    -- if no open modem is found, return any modem
+    if #all_modems > 0 then return all_modems[1]
+    else error("No modem attached!") end
+end
+
 local function setup(hostname, request_processor, modem, cooldown)
+
+    MODEM_SIDE = findModemWithPreferred(modem)
 
     -- Generate a start and stop function
     return
 
     -- START
     function ()
-        local MODEM
-        -- find/open a modem according to README
+        rednet.open(MODEM_SIDE)
 
         rednet.host(PROTOCOL, hostname)
 
@@ -25,9 +55,18 @@ local function setup(hostname, request_processor, modem, cooldown)
             local senderId, message, protocol = rednet.receive(PROTOCOL, 5)
             if not senderId then goto continue end
 
-            local status, response_content = request_processor(senderId)
-            local response = { status = status, body = response_content }
+            local status
+            local response_body
 
+            -- message="GET myresource"  ->  method="GET" body="myresource"
+            local method, body = message:match("^(%S+)%s+(.*)$")
+            if not method then -- if no whitespace is present
+                status, response_body = 201, "Request needs to start with a method, followed by a whitespace and the request body."
+            else -- process the request
+                status, response_body = request_processor(senderId, string.upper(method), body, protocol)
+            end
+
+            local response = { status = status, body = response_body }
             rednet.send(senderId, response, protocol)
 
             ::continue::
@@ -39,6 +78,8 @@ local function setup(hostname, request_processor, modem, cooldown)
     function ()
         rednet.unhost(PROTOCOL, hostname)
 
+        rednet.close(MODEM_SIDE)
+
         IS_SERVER_RUNNING = false
     end
 end
@@ -48,9 +89,24 @@ end
 
 local requestProcessors -- table to hold them
 
-function requestProcessors.static(path)
+function requestProcessors.static(directory)
     return function (senderId, method, body, protocol)
-        -- 
+        if method == METHODS.GET then
+            local path = fs.combine(directory, body)
+            if not fs.exists(path) then return 404, '"./'..path..'" not found.' end
+            local fh = fs.open(path, 'r')
+            local content = fh.readAll()
+            fh.close()
+            return 100, content
+        elseif method == METHODS.PUT then
+            local target, content = body:match("^(%S+)%s+(.*)$")
+            local path = fs.combine(directory, target)
+            local fh = fs.open(path, 'w')
+            fh.write(content)
+            fh.close()
+        else
+            return 201, '"'..method..'" is not a valid method.'
+        end
     end
 end
 
