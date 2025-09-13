@@ -22,7 +22,7 @@ function requestProcessors.static(directory)
         elseif method == METHODS.PUT then
             local path = fs.combine(directory, request.path)
             local fh = fs.open(path, 'w')
-            fh.write(request.content)
+            fh.write(request.body)
             fh.close()
             return 100, nil
         else
