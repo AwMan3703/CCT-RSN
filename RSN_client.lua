@@ -49,11 +49,14 @@ local function enrichResponse(response)
     return response
 end
 
-local function sendRequestAndAwaitResponse(hostname, method, body)
+local function sendRequestAndAwaitResponse(hostname, method, request)
     local serverId = rednet.lookup(string.upper(PROTOCOL), hostname)
     if not serverId then return enrichResponse({ status = 301, body = nil }), nil end
 
-    rednet.send(serverId, string.upper(method).." "..body, string.upper(PROTOCOL))
+    if type(request) ~= "table" then request = { body = request } end
+    if not request.body then request.body = '' end
+    request.method = string.upper(method)
+    rednet.send(serverId, request, string.upper(PROTOCOL))
 
     local responderId, response, responseProtocol
     repeat
@@ -65,12 +68,12 @@ local function sendRequestAndAwaitResponse(hostname, method, body)
     return enrichResponse(response), responderId
 end
 
-local function get(hostname, resource_name)
-    return sendRequestAndAwaitResponse(hostname, METHODS.GET, resource_name)
+local function get(hostname, path)
+    return sendRequestAndAwaitResponse(hostname, METHODS.GET, {path = path})
 end
 
-local function put(hostname, resource_name, body)
-    return sendRequestAndAwaitResponse(hostname, METHODS.PUT, resource_name.." "..body)
+local function put(hostname, path, content)
+    return sendRequestAndAwaitResponse(hostname, METHODS.PUT, {path = path, body = content})
 end
 
 
