@@ -56,7 +56,6 @@ end
     - `server hostname` The server to send the request to
     - `resource name` The resource's name (id, path, title, or whatever else)
     - `content` In PUT requests, the content to upload
-If your server accepts custom methods, you can specify your method by using `rsn.request(<server hostname>, <method>, <content>)`.
-
-If your server has a custom request processor that expects more data in the request, you can pass a table as the `<content>` parameter, having a "body" property with the main content and other properties for additional data. Normally, the content passed to the function is put in the "body" field of the request automatically.
+    - If your server accepts custom methods, you can specify your method by using `rsn.request(<server hostname>, <method>, <content>)`.
+    - If your server has a custom request processor that expects more data in the request, you can pass a table as the `<content>` parameter, having a "body" property with the main content and other properties for additional data. Normally, the content passed to the function is put in the "body" field of the request automatically.
 4. Extract resources and status codes with `response.status` and `response.body`
