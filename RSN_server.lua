@@ -56,20 +56,23 @@ local function setup(hostname, request_processor, modem, cooldown)
         IS_SERVER_RUNNING = true
 
         repeat
-            local request_method, request_body, response_status, response_body, response
+            local request_method, response_status, response
 
-            local senderId, message, protocol = rednet.receive(string.upper(PROTOCOL), 5)
+            local senderId, request, protocol = rednet.receive(string.upper(PROTOCOL), 5)
             if not senderId then goto continue end
 
-            -- message="GET myresource"  ->  method="GET" body="myresource"
-            request_method, request_body = message:match("^(%S+)%s+(.*)$")
+            -- extract the method and pass the rest
+            request_method = request.method
+            request.method = nil
             if not request_method then -- if no whitespace is present
-                response_status, response_body = 201, "Request needs to start with a method, followed by a whitespace and the request body."
+                response_status, response = 201, "Request needs to have a <method> property."
             else -- process the request
-                response_status, response_body = request_processor(senderId, string.upper(request_method), request_body, protocol)
+                if not request.body then request.body = '' end
+                response_status, response = request_processor(senderId, string.upper(request_method), request, protocol)
             end
 
-            response = { status = response_status, body = response_body }
+            if type(response) ~= 'table' then response = { body = response } end
+            response.status = response_status
             rednet.send(senderId, response, protocol)
 
             ::continue::
@@ -88,42 +91,9 @@ local function setup(hostname, request_processor, modem, cooldown)
 end
 
 
--- PREDEFINED REQUEST PROCESSORS
-
-local requestProcessors = {} -- table to hold them
-
-function requestProcessors.static(directory)
-    return function (senderId, method, body, protocol)
-        if method == METHODS.GET then
-            local path = fs.combine(directory, body)
-            if not fs.exists(path) then return 404, '"./'..path..'" not found.' end
-            local fh = fs.open(path, 'r')
-            local content = fh.readAll()
-            fh.close()
-            return 100, content
-        elseif method == METHODS.PUT then
-            local target, content = body:match("^(%S+)%s+(.*)$")
-            local path = fs.combine(directory, target)
-            local fh = fs.open(path, 'w')
-            fh.write(content)
-            fh.close()
-        else
-            return 201, '"'..method..'" is not a valid method.'
-        end
-    end
-end
-
-function requestProcessors.echo()
-    return function (senderId, method, body, protocol)
-        return 100, body
-    end
-end
-
-
 -- RETURN THE LIBRARY
 
 return {
     setup = setup,
-    methods = METHODS,
-    requestProcessors = requestProcessors
+    methods = METHODS
 }
