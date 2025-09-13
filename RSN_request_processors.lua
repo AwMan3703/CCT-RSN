@@ -45,6 +45,14 @@ function requestProcessors.static(directory)
     end
 end
 
+function requestProcessors.sandboxed(directory)
+    local static = requestProcessors.static(directory)
+    return function (senderId, method, request, protocol)
+        request.path = fs.combine(tostring(senderId), request.path)
+        return static(senderId, method, request, protocol)
+    end
+end
+
 function requestProcessors.echo()
     return function (senderId, method, request, protocol)
         return 100, request.body
