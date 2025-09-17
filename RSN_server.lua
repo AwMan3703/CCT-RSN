@@ -82,11 +82,11 @@ local function setup(hostname, request_processor, modem, cooldown)
 
     -- STOP
     function ()
+        IS_SERVER_RUNNING = false
+
         rednet.unhost(string.upper(PROTOCOL), hostname)
 
         rednet.close(MODEM_SIDE)
-
-        IS_SERVER_RUNNING = false
     end
 end
 
