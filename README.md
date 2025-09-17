@@ -30,7 +30,7 @@ Example of a custom request processor:
 ```
 -- Echoes the content of the request back to the sender
 
-local my_request_processor(senderId, method, request, protocol)
+local function my_request_processor(senderId, method, request, protocol)
     
     -- log the request
     print('Request from #'...senderId...' under protocol "'...protocol...'"')
