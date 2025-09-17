@@ -33,7 +33,7 @@ Example of a custom request processor:
 local function my_request_processor(senderId, method, request, protocol)
     
     -- log the request
-    print('Request from #'...senderId...' under protocol "'...protocol...'"')
+    print('Request from #'..senderId..' under protocol "'..protocol..'"')
     
     -- check that the correct method was used
     if method == rsnServer.methods.GET then
